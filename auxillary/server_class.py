@@ -1,12 +1,16 @@
 from .url_object import UrlObject
 from .server_supplemental_classes.server_core import ServerCore
-
+from .message_creator import get_embedded_message_from_queue
 
 class ServerHandler(ServerCore):
     def __init__(self, server_id, discord_client):
         super().__init__(discord_client)
         self.server_id = server_id
         self.queue = []
+
+    def is_queue_empty(self):
+        if len(self.queue) == 0:
+            return True
 
     async def add_url(self, ctx, url):
         # check if connected to voice channel
@@ -23,30 +27,43 @@ class ServerHandler(ServerCore):
             self.play_next_url_in_queue()
 
     def play_next_url_in_queue(self):
-        next_item = self.queue.pop(0)
-        self.audio_engine.play_item(next_item.url, self.play_next_url_in_queue)
+        next_item = self.queue[0]
+        self.audio_engine.play_item(next_item.url, self.go_to_next_item)
+
+    def skip(self):
+        self.stop()
+        self.go_to_next_item()
+
+    def go_to_next_item(self):
+        self.queue.pop(0)
+        if len(self.queue) == 0:
+            return
+        self.play_next_url_in_queue()
 
     def add_to_queue(self, url):
         self.queue.append(
             UrlObject(url)
         )
 
-    # def remove_from_queue(self, url):
-    #     url_found_in_queue = False
-    #     for idx, url_obj in enumerate(self.queue):
-    #         if url_obj.url == url:
-    #             idx_to_pop = idx
-    #             url_found_in_queue = True
-    #             break
-    #
-    #     if url_found_in_queue:
-    #         self.queue.pop(idx_to_pop)
-    #
-    # def remove_from_queue_at_index(self, idx):
-    #     self.queue.pop(idx)
-    #
-    # def get_queue(self):
-    #     return self.queue
-    #
-    # def get_queue_text(self):
-    #     pass
+    def clear_queue(self):
+        self.queue = []
+        self.stop()
+
+    def remove_from_queue_at_index(self, idx):
+        self.queue.pop(idx)
+
+
+    def get_embedded_queue_message(self):
+        return get_embedded_message_from_queue(self.queue)
+
+    def play(self):
+        self.audio_engine.play()
+
+    def pause(self):
+        self.audio_engine.pause()
+
+    def resume(self):
+        self.audio_engine.resume()
+
+    def stop(self):
+        self.audio_engine.stop()

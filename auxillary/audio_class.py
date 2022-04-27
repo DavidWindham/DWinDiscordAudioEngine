@@ -31,3 +31,12 @@ class AudioEngine:
         self.audio_interface.play(get_ffmpeg_object(url), after=lambda e: song_finished_callback)
 
         self.audio_interface.is_playing()
+
+    def pause(self):
+        self.audio_interface.pause()
+
+    def resume(self):
+        self.audio_interface.resume()
+
+    def stop(self):
+        self.audio_interface.stop()

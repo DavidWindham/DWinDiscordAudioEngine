@@ -1,16 +1,19 @@
 from youtube_dl import YoutubeDL
-
+import datetime
 
 class UrlObject:
     def __init__(self, url_to_scrape):
         youtube_dl_args = {'format': 'bestaudio', 'noplaylist': 'True'}
         with YoutubeDL(youtube_dl_args) as youtube_dl:
             youtube_json = youtube_dl.extract_info(url_to_scrape, download=False)
+        print(youtube_json)
         self.video_id = youtube_json['id']
         self.url = youtube_json['formats'][0]['url']
         self.title = youtube_json['title']
         self.thumbnail_link = youtube_json['thumbnail']
         self.webpage_url = youtube_json['webpage_url']
+        self.duration = youtube_json['duration']
+        self.duration_string = str(datetime.timedelta(seconds=self.duration))
 
     def get_id(self):
         return self.video_id
