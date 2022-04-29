@@ -33,17 +33,13 @@ class MongoDB(DB):
 
     def load_all_server_info(self):
         # TODO: Add probably decorators on all these functions to ensure DB connection is successful?
-        test = self.db.servers.find()
-        print(test)
-        for result in test:
-            print(result)
-        return test
+        return self.db.servers.find({})
 
     def load_single_server_info(self, server_id: int):
         return self.db.find_one({'server_id': server_id})
 
     def add_item_to_server_history(self, server_id: int, item_to_add: dict):
-        self.db.update({'server_id': server_id}, {"push": {'history': item_to_add}})
+        self.db.servers.update_one({'server_id': server_id}, {"$push": {'history': item_to_add}})
 
     def get_server_history(self, server_id, limit=10):
         test = self.db.find_one({'server_id': server_id}, {"history"}).limit(limit)

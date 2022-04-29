@@ -13,9 +13,10 @@ def load_servers(db, client):
     server_dict = {}
 
     for server in servers_info:
-        server_dict[server.id] = ServerHandler(
+        print(server)
+        server_dict[server['server_id']] = ServerHandler(
             db=db,
-            server_id=server.id,
+            server_id=server['server_id'],
             discord_client=client
         )
     return server_dict

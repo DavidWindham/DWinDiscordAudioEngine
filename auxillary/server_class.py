@@ -25,6 +25,7 @@ class ServerHandler(ServerCore, ServerDB):
             self.set_audio_engine_interface(ctx)
 
         self.add_to_queue(url)
+
         # if audio_engine isn't playing, play the next in queue (the song that was just added)
         if not self.audio_engine.is_engine_playing():
             self.play_next_url_in_queue()
@@ -44,9 +45,11 @@ class ServerHandler(ServerCore, ServerDB):
         self.play_next_url_in_queue()
 
     def add_to_queue(self, url):
+        object_to_add = UrlObject(url)
         self.queue.append(
-            UrlObject(url)
+            object_to_add
         )
+        self.append_to_history(object_to_add.get_dict())
 
     def clear_queue(self):
         self.queue = []

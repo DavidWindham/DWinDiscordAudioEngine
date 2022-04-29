@@ -1,5 +1,7 @@
-from youtube_dl import YoutubeDL
 import datetime
+
+from youtube_dl import YoutubeDL
+
 
 class UrlObject:
     def __init__(self, url_to_scrape):
@@ -29,3 +31,14 @@ class UrlObject:
 
     def get_webpage_url(self):
         return self.webpage_url
+
+    def get_dict(self):
+        return {
+            "video_id": self.video_id,
+            "url": self.url,
+            "title": self.title,
+            "thumbnail_link": self.thumbnail_link,
+            "webpage_url": self.webpage_url,
+            "duration": self.duration,
+            "duration_string": self.duration_string
+        }

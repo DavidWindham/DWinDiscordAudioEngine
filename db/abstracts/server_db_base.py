@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 
 class ServerDBComm(ABC):
+    @abstractmethod
     def __init__(self, db, server_id):
         self.db = db
         self.server_id = server_id

@@ -94,6 +94,11 @@ async def queue(server, ctx):
     queue_message = await ctx.channel.send(embed=embedded_message)
     server.set_queue_message_id(queue_message.id)
 
+@client.command(pass_context=True, help="Embeds the playback queue in a message")
+@remove_message_post_func
+async def history(server, ctx, history_length):
+    server.get_history(limit=history_length)
+
 
 @client.command(pass_context=True, help="Clears all items in the playback queue")
 @remove_message_post_func
