@@ -1,11 +1,13 @@
-from .url_object import UrlObject
-from .server_supplemental_classes.server_core import ServerCore
 from .message_creator import get_embedded_message_from_queue
+from .server_supplemental_classes.server_core import ServerCore
+from .server_supplemental_classes.server_db_class import ServerDB
+from .url_object import UrlObject
 
 
-class ServerHandler(ServerCore):
-    def __init__(self, server_id, discord_client):
-        super().__init__(discord_client)
+class ServerHandler(ServerCore, ServerDB):
+    def __init__(self, db, server_id, discord_client):
+        ServerCore.__init__(self, discord_client)
+        ServerDB.__init__(self, db, server_id)
         self.server_id = server_id
         self.queue = []
 
