@@ -1,5 +1,6 @@
-from db.mongo.mongo_DB import MongoDB
 from auxillary.server_class import ServerHandler
+from db.mongo.mongo_DB import MongoDB
+
 
 def get_db(server_uri: str, server_port: str):
     if server_uri is not None or server_uri == "" or server_port is not None or server_port == "":

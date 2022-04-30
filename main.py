@@ -23,6 +23,7 @@ def remove_message_post_func(func_to_run):
         server = get_server(ctx)
         await func_to_run(server, ctx, *args, **kwargs)
         await ctx.message.delete()
+        await server.update_message()
 
     # Big thanks to Sierra Macleod for this solution
     # https://medium.com/@cantsayihave/decorators-in-discord-py-e44ce3a1aae5
@@ -50,7 +51,7 @@ async def play(server, ctx, url=None):
         if server.is_queue_empty():
             await ctx.channel.send("Play queue is empty")
             return
-        await server.play_next_url_in_queue()
+        server.play_next_url_in_queue()
     else:
         await server.add_url(ctx, url)
 
@@ -91,8 +92,11 @@ async def queue(server, ctx):
             print("Message not found, likely deleted by another bot or client")
 
     embedded_message = server.get_embedded_queue_message()
+    print("Embeeded message", embedded_message)
     queue_message = await ctx.channel.send(embed=embedded_message)
     server.set_queue_message_id(queue_message.id)
+    server.set_server_message(queue_message)
+
 
 @client.command(pass_context=True, help="Embeds the playback queue in a message")
 @remove_message_post_func

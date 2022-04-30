@@ -1,8 +1,11 @@
 from .message_creator import get_embedded_message_from_queue
+from .message_handler.message_handler import MessageHandler
 from .server_supplemental_classes.server_core import ServerCore
 from .server_supplemental_classes.server_db_class import ServerDB
 from .url_object import UrlObject
 
+def ping_this():
+    print("OK FINISHED AND CALLBACK IS WORKING")
 
 class ServerHandler(ServerCore, ServerDB):
     def __init__(self, db, server_id, discord_client):
@@ -10,6 +13,7 @@ class ServerHandler(ServerCore, ServerDB):
         ServerDB.__init__(self, db, server_id)
         self.server_id = server_id
         self.queue = []
+        self.message_handler = MessageHandler(discord_client=discord_client)
 
     def is_queue_empty(self):
         if len(self.queue) == 0:
@@ -32,15 +36,19 @@ class ServerHandler(ServerCore, ServerDB):
 
     def play_next_url_in_queue(self):
         next_item = self.queue[0]
-        self.audio_engine.play_item(next_item.url, self.go_to_next_item)
+        print("Next item:", next_item)
+        self.audio_engine.play_item(next_item.url, ping_this)
 
     def skip(self):
         self.stop()
         self.go_to_next_item()
 
     def go_to_next_item(self):
+        print("about to load the next item")
         self.queue.pop(0)
+        print("popped")
         if len(self.queue) == 0:
+            print("queue length was zero, returning")
             return
         self.play_next_url_in_queue()
 
@@ -72,3 +80,9 @@ class ServerHandler(ServerCore, ServerDB):
 
     def stop(self):
         self.audio_engine.stop()
+
+    def set_server_message(self, message):
+        self.message_handler.set_message(message)
+
+    async def update_message(self):
+        await self.message_handler.update_message(self.queue)
