@@ -1,4 +1,4 @@
-from auxillary.message_creator import get_embedded_message_from_queue
+from auxillary.Server.message_creator import get_embedded_message_from_queue
 
 
 class MessageHandler:
@@ -13,6 +13,9 @@ class MessageHandler:
         if self.message is None:
             return
         message_to_send = get_embedded_message_from_queue(queue=queue)
-        await self.message.edit(
-            embed=message_to_send
-        )
+        try:
+            await self.message.edit(
+                embed=message_to_send
+            )
+        except:
+            self.message = None

@@ -1,11 +1,11 @@
+import asyncio
+
 from .message_creator import get_embedded_message_from_queue
 from .message_handler.message_handler import MessageHandler
 from .server_supplemental_classes.server_core import ServerCore
 from .server_supplemental_classes.server_db_class import ServerDB
 from .url_object import UrlObject
 
-def ping_this():
-    print("OK FINISHED AND CALLBACK IS WORKING")
 
 class ServerHandler(ServerCore, ServerDB):
     def __init__(self, db, server_id, discord_client):
@@ -14,12 +14,14 @@ class ServerHandler(ServerCore, ServerDB):
         self.server_id = server_id
         self.queue = []
         self.message_handler = MessageHandler(discord_client=discord_client)
+        # bodged solution to block callback if stopped
+        self.stop_block = False
 
     def is_queue_empty(self):
         if len(self.queue) == 0:
             return True
 
-    async def add_url(self, ctx, url):
+    async def voice_channel_and_audio_engine_check(self, ctx):
         # check if connected to voice channel
         if self.voice_channel is None:
             await self.join_voice_channel(ctx)
@@ -28,27 +30,38 @@ class ServerHandler(ServerCore, ServerDB):
         if self.audio_engine.is_audio_interface_set() is False:
             self.set_audio_engine_interface(ctx)
 
+    async def add_url(self, ctx, url):
+        await self.voice_channel_and_audio_engine_check(ctx)
+
         self.add_to_queue(url)
 
         # if audio_engine isn't playing, play the next in queue (the song that was just added)
         if not self.audio_engine.is_engine_playing():
             self.play_next_url_in_queue()
 
-    def play_next_url_in_queue(self):
+    def play_next_url_in_queue(self, ctx=None):
+        if ctx is not None:
+            self.voice_channel_and_audio_engine_check(ctx)
+
         next_item = self.queue[0]
-        print("Next item:", next_item)
-        self.audio_engine.play_item(next_item.url, ping_this)
+        self.audio_engine.play_item(next_item.url, self.play_next_for_callback)
 
     def skip(self):
-        self.stop()
-        self.go_to_next_item()
+        # self.stop()
+        self.pause()
+        self.play_next_item()
 
-    def go_to_next_item(self):
-        print("about to load the next item")
+    def play_next_for_callback(self):
+        if self.stop_block:
+            self.stop_block = False
+            return
+
+        self.play_next_item()
+        self.sync_update_message()
+
+    def play_next_item(self):
         self.queue.pop(0)
-        print("popped")
         if len(self.queue) == 0:
-            print("queue length was zero, returning")
             return
         self.play_next_url_in_queue()
 
@@ -70,6 +83,7 @@ class ServerHandler(ServerCore, ServerDB):
         return get_embedded_message_from_queue(self.queue)
 
     def play(self):
+        self.stop_block = False
         self.audio_engine.play()
 
     def pause(self):
@@ -79,6 +93,7 @@ class ServerHandler(ServerCore, ServerDB):
         self.audio_engine.resume()
 
     def stop(self):
+        self.stop_block = True
         self.audio_engine.stop()
 
     def set_server_message(self, message):
@@ -86,3 +101,10 @@ class ServerHandler(ServerCore, ServerDB):
 
     async def update_message(self):
         await self.message_handler.update_message(self.queue)
+
+    def sync_update_message(self):
+        future_func = asyncio.run_coroutine_threadsafe(coro=self.update_message(), loop=self.discord_client.loop)
+        try:
+            future_func.result()
+        except:
+            print("Error at async threadsafe for update_message, called from playback callback")

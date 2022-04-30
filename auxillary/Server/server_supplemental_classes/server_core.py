@@ -23,6 +23,8 @@ class ServerCore:
             self.clear_audio_engine_interface()
 
     def set_audio_engine_interface(self, ctx):
+        test_client = get(self.discord_client.voice_clients, guild=ctx.guild)
+        print(test_client)
         self.audio_engine.set_audio_interface(
             get(self.discord_client.voice_clients, guild=ctx.guild)
         )

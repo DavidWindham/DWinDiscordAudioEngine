@@ -28,9 +28,7 @@ class AudioEngine:
         self.audio_interface = None
 
     def play_item(self, url, song_finished_callback):
-        print("attempting to play url:", url)
-        self.audio_interface.play(get_ffmpeg_object(url), after=lambda e: song_finished_callback)
-
+        self.audio_interface.play(get_ffmpeg_object(url), after=lambda e: song_finished_callback())
         self.audio_interface.is_playing()
 
     def pause(self):

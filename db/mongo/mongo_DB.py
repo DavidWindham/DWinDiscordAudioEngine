@@ -42,13 +42,12 @@ class MongoDB(DB):
         self.db.servers.update_one({'server_id': server_id}, {"$push": {'history': item_to_add}})
 
     def get_server_history(self, server_id, limit=10):
+        # TODO: No functionality here yet
         test = self.db.find_one({'server_id': server_id}, {"history"}).limit(limit)
-        print(test)
         return []
 
     def get_queue_message_id(self, server_id: int) -> int or None:
         return self.db.servers.find_one({'server_id': server_id}, {"queue_message_id"})['queue_message_id']
 
     def set_queue_message_id(self, server_id: int, queue_message_id: int):
-        print("Gonna set message with id:", queue_message_id)
         self.db.servers.update_one({'server_id': server_id}, {"$set": {'queue_message_id': queue_message_id}})

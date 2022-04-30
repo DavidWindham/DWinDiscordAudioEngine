@@ -1,4 +1,4 @@
-from auxillary.server_class import ServerHandler
+from auxillary.Server.server_class import ServerHandler
 from db.mongo.mongo_DB import MongoDB
 
 
@@ -14,7 +14,6 @@ def load_servers(db, client):
     server_dict = {}
 
     for server in servers_info:
-        print(server)
         server_dict[server['server_id']] = ServerHandler(
             db=db,
             server_id=server['server_id'],
