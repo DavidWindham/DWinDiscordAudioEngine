@@ -1,6 +1,6 @@
 from pymongo import MongoClient
 
-from db.abstracts.base import DB
+from database.abstracts.base import DB
 from .server_db_object import get_mongo_server_object
 
 

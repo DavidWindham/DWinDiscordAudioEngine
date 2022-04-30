@@ -3,10 +3,11 @@ from functools import wraps
 
 from discord.errors import NotFound
 from discord.ext import commands
+from discord.utils import get
 
 import config
-from auxillary.Server.server_class import ServerHandler
-from db.db_interface import get_db, load_servers
+from Server.server import Server
+from database.db_interface import get_db, load_servers
 
 client = commands.Bot(command_prefix='_')
 
@@ -23,7 +24,7 @@ def remove_message_post_func_and_inject_server(func_to_run):
         server = get_server(ctx)
         await func_to_run(server, ctx, *args, **kwargs)
         await ctx.message.delete()
-        await server.update_message()
+        await server.update_server_message(ctx.channel)
 
     # Big thanks to Sierra Macleod for this solution
     # https://medium.com/@cantsayihave/decorators-in-discord-py-e44ce3a1aae5
@@ -41,20 +42,17 @@ async def on_ready():
 @client.command(pass_context=True, help="Leave the voice channel the bot is currently in")
 @remove_message_post_func_and_inject_server
 async def leave(server, ctx):
-    await server.leave_voice_channel(ctx)
+    # voice_channel = ctx.message.author.voice.channel
+    await server.leave_voice_channel(ctx.guild.voice_client)
 
 
 @client.command(pass_context=True, help="Use a URL for a youtube video to be added to the queue")
 @remove_message_post_func_and_inject_server
 async def play(server, ctx, url=None):
-    if url is None:
-        if server.is_queue_empty():
-            await send_queue_message(server, ctx)
-            # await ctx.channel.send("Play queue is empty")
-            return
-        server.play_next_url_in_queue(ctx)
-    else:
-        await server.add_url(ctx, url)
+    voice_channel = ctx.message.author.voice.channel
+    voice_clients = get(client.voice_clients, guild=ctx.guild)
+    print(voice_clients)
+    await server.play(voice_channel, voice_clients, ctx.guild, url)
 
 
 @client.command(pass_context=True, help="Pause the current playback")
@@ -78,13 +76,14 @@ async def stop(server, ctx):
 @client.command(pass_context=True, help="Skips the current track and plays the next in the queue")
 @remove_message_post_func_and_inject_server
 async def skip(server, ctx):
-    server.skip()
+    server.play_next()
 
 
 @client.command(pass_context=True, help="Embeds the playback queue in a message")
 @remove_message_post_func_and_inject_server
 async def queue(server, ctx):
-    await send_queue_message(server, ctx)
+    await server.update_server_message(channel=ctx.channel)
+    #await send_queue_message(server, ctx)
 
 
 @client.command(pass_context=True, help="Embeds the playback queue in a message")
@@ -116,8 +115,8 @@ async def clear_messages(ctx, amount=1000):
 
 def get_server(ctx):
     if ctx.guild.id not in servers:
-        servers[ctx.guild.id] = ServerHandler(
-            db=db,
+        servers[ctx.guild.id] = Server(
+            mongo_db=db,
             server_id=ctx.guild.id,
             discord_client=client
         )

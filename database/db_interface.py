@@ -1,5 +1,5 @@
-from auxillary.Server.server_class import ServerHandler
-from db.mongo.mongo_DB import MongoDB
+from Server.server import Server
+from database.mongo.mongo_DB import MongoDB
 
 
 def get_db(server_uri: str, server_port: str):
@@ -14,8 +14,8 @@ def load_servers(db, client):
     server_dict = {}
 
     for server in servers_info:
-        server_dict[server['server_id']] = ServerHandler(
-            db=db,
+        server_dict[server['server_id']] = Server(
+            mongo_db=db,
             server_id=server['server_id'],
             discord_client=client
         )
