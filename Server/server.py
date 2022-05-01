@@ -1,6 +1,7 @@
+import asyncio
+
 from discord import Embed
 from discord.utils import get
-import asyncio
 
 from .supporting_classes.db import ServerDB
 from .supporting_classes.queue import Queue
@@ -128,7 +129,6 @@ class Server:
             future_func.result()
         except:
             print("Error at async threadsafe for update_message, called from playback callback")
-
 
     '''
     Database specific methods
