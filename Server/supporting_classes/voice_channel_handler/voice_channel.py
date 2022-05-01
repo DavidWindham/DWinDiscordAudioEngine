@@ -34,9 +34,6 @@ class VoiceChannel:
             await voice_client.disconnect()
             self.voice_channel = None
             self.audio_engine.clear()
-        #await self.voice_channel.disconnect()
-        # Clear the audio interface in the engine
-        #self.audio_engine.clear()
 
     '''
     Pure Engine funcs
@@ -47,9 +44,6 @@ class VoiceChannel:
 
     def play_url(self, url, url_finished_callback):
         self.audio_engine.play_url(url, url_finished_callback)
-
-    def play(self):
-        self.audio_engine.play()
 
     def pause(self):
         self.audio_engine.pause()

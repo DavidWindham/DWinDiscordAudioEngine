@@ -6,14 +6,15 @@ class MessageHandler:
     async def post_message(self, channel, embedded_content):
         self.message = await channel.send(embed=embedded_content)
 
-    def set_message(self, message):
-        self.message = message
+    # def set_message(self, message):
+    #     self.message = message
 
-    async def update_embedded_message(self, channel, embedded_content):
+    async def create_embedded_message(self, channel, embedded_content):
         if self.message is None:
             await self.post_message(channel, embedded_content)
             return
 
+    async def update_embedded_message(self, embedded_content):
         try:
             await self.message.edit(
                 embed=embedded_content

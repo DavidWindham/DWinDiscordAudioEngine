@@ -42,7 +42,6 @@ async def on_ready():
 @client.command(pass_context=True, help="Leave the voice channel the bot is currently in")
 @remove_message_post_func_and_inject_server
 async def leave(server, ctx):
-    # voice_channel = ctx.message.author.voice.channel
     await server.leave_voice_channel(ctx.guild.voice_client)
 
 
@@ -51,7 +50,6 @@ async def leave(server, ctx):
 async def play(server, ctx, url=None):
     voice_channel = ctx.message.author.voice.channel
     voice_clients = get(client.voice_clients, guild=ctx.guild)
-    print(voice_clients)
     await server.play(voice_channel, voice_clients, ctx.guild, url)
 
 
@@ -82,8 +80,7 @@ async def skip(server, ctx):
 @client.command(pass_context=True, help="Embeds the playback queue in a message")
 @remove_message_post_func_and_inject_server
 async def queue(server, ctx):
-    await server.update_server_message(channel=ctx.channel)
-    #await send_queue_message(server, ctx)
+    await server.create_server_message(channel=ctx.channel)
 
 
 @client.command(pass_context=True, help="Embeds the playback queue in a message")
@@ -124,19 +121,19 @@ def get_server(ctx):
     return servers[ctx.guild.id]
 
 
-async def send_queue_message(server, ctx):
-    old_queue_message_id = server.get_queue_message_id()
-    if old_queue_message_id is not None:
-        try:
-            old_queue_message = await ctx.channel.fetch_message(old_queue_message_id)
-            await old_queue_message.delete()
-        except NotFound:
-            print("Message not found, likely deleted by another bot or client")
-
-    embedded_message = server.get_embedded_queue_message()
-    queue_message = await ctx.channel.send(embed=embedded_message)
-    server.set_queue_message_id(queue_message.id)
-    server.set_server_message(queue_message)
+# async def send_queue_message(server, ctx):
+#     old_queue_message_id = server.get_queue_message_id()
+#     if old_queue_message_id is not None:
+#         try:
+#             old_queue_message = await ctx.channel.fetch_message(old_queue_message_id)
+#             await old_queue_message.delete()
+#         except NotFound:
+#             print("Message not found, likely deleted by another bot or client")
+#
+#     embedded_message = server.get_embedded_queue_message()
+#     queue_message = await ctx.channel.send(embed=embedded_message)
+#     server.set_queue_message_id(queue_message.id)
+#     server.set_server_message(queue_message)
 
 
 client.run(config.DISCORD_TOKEN)

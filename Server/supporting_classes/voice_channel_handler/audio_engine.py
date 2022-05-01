@@ -35,9 +35,6 @@ class AudioEngine:
         self.audio_interface.play(get_ffmpeg_object(url), after=lambda e: url_finished_callback())
         self.audio_interface.is_playing()
 
-    def play(self):
-        self.audio_interface.play()
-
     def pause(self):
         self.audio_interface.pause()
 

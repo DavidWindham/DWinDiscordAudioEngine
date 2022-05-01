@@ -16,6 +16,7 @@ class Server:
         self.message_handler = MessageHandler(discord_client=discord_client)
         self.voice_channel = VoiceChannel()
         self.currently_playing = None
+        self.playback_status = "Stopped"
         self.callback_block = False
 
     '''
@@ -25,22 +26,24 @@ class Server:
     async def play(self, voice_channel, voice_clients, guild_id, url=None):
         # if not already joined(?)
         if voice_clients is None:
-            print("it was none")
             await self.join_voice_channel(voice_channel, guild_id)
         elif not voice_clients.is_connected():
             print("not connected")
 
         if url is None:
-            # play voice channel
-            await self.voice_channel.play()
+            # play voice channel with self.currently_playing
+            if self.currently_playing is not None:
+                self.voice_channel.play_url(self.currently_playing.get_url(), self.play_next)
+                self.playback_status = "Playing"
+            return
 
         url_object = UrlObject(url)
-        print(url_object.get_dict())
         self.db.append_to_history(url_object.get_dict())
 
         if not self.voice_channel.is_engine_playing():
             self.voice_channel.play_url(url_object.get_url(), self.play_next)
             self.currently_playing = url_object
+            self.playback_status = "Playing"
             return
 
         self.queue.add_to_queue(
@@ -61,17 +64,27 @@ class Server:
         next_item_to_play = self.queue.get_next_from_queue()
         self.voice_channel.play_url(next_item_to_play.get_url(), self.play_next)
         self.currently_playing = next_item_to_play
+        self.playback_status = "Playing"
+
+    # def play(self):
+    #     if self.currently_playing is not None:
+    #         self.voice_channel.play()
+    #         self.playback_status = "Playing"
 
     def pause(self):
         self.voice_channel.pause()
+        self.playback_status = "Paused"
 
     def resume(self):
         self.voice_channel.resume()
+        self.playback_status = "Playing"
 
     def stop(self):
         self.callback_block = True
         # this will fire the callback, TODO: fix the bug that comes with this
         self.voice_channel.stop()
+        # self.currently_playing = None
+        self.playback_status = "Stopped"
 
     '''
     VoiceChannel specific methods
@@ -99,37 +112,24 @@ class Server:
     Message specific methods
     '''
 
-    def set_server_message(self, message):
-        self.message_handler.set_message(message)
+    # def set_server_message(self, message):
+    #     self.message_handler.set_message(message)
 
-    async def update_server_message(self, channel):
-        # get queue and status and stuff here
-        # self.queue.get_queue()
-        # if self.currently_playing is not None
-        embedded_content = self.get_embedded_message_content()
-        await self.message_handler.update_embedded_message(channel=channel, embedded_content=embedded_content)
-
-    def get_embedded_message_content(self):
-        embedded_message = Embed(title="Queue", color=0xeb4034)
-
-        if len(self.queue.get_queue()) == 0:
-            embedded_message.add_field(name="Empty", value="Add some tunes", inline=False)
-            return embedded_message
-        for idx, item in enumerate(self.queue.get_queue()):
-            if idx == 0:
-                self.get_single_item_field(embedded_message, item, name_prefix="Now Playing: ")
-                embedded_message.set_image(url=item.thumbnail_link)
-            else:
-                self.get_single_item_field(embedded_message, item, name_prefix=str(idx) + ". ")
-        return embedded_message
-
-    def get_single_item_field(self, embed, item, name_prefix):
-        embed.insert_field_at(
-            index=0,
-            name=name_prefix + item.title,
-            value=str(item.duration_string),
-            inline=False
+    async def create_server_message(self, channel):
+        embedded_content = get_embedded_message_content(
+            queue=self.queue.get_queue(),
+            currently_playing=self.currently_playing,
+            playback_status=self.playback_status
         )
+        await self.message_handler.create_embedded_message(channel=channel, embedded_content=embedded_content)
+
+    async def update_server_message(self):
+        embedded_content = get_embedded_message_content(
+            queue=self.queue.get_queue(),
+            currently_playing=self.currently_playing,
+            playback_status=self.playback_status
+        )
+        await self.message_handler.update_embedded_message(embedded_content=embedded_content)
 
     '''
     Database specific methods
@@ -137,3 +137,36 @@ class Server:
 
     def get_history(self, limit=10):
         self.db.get_history(limit=limit)
+
+
+def get_embedded_message_content(queue, currently_playing, playback_status):
+    embedded_message = Embed(title="Queue", color=0xeb4034)
+
+    if len(queue) == 0 and currently_playing is None:
+        embedded_message.add_field(name="Empty", value="Add some tunes", inline=False)
+        return embedded_message
+
+    embedded_message.insert_field_at(
+        index=0,
+        name=playback_status,
+        value="_",
+        inline=False
+    )
+
+    if currently_playing is not None:
+        get_single_item_field(embedded_message, currently_playing, name_prefix="Now Playing: ")
+        embedded_message.set_image(url=currently_playing.thumbnail_link)
+
+    for idx, item in enumerate(queue):
+        get_single_item_field(embedded_message, item, name_prefix=str(idx + 1) + ". ")
+
+    return embedded_message
+
+
+def get_single_item_field(embed, item, name_prefix):
+    embed.insert_field_at(
+        index=0,
+        name=name_prefix + item.title,
+        value=str(item.duration_string),
+        inline=False
+    )
