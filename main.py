@@ -24,7 +24,8 @@ def remove_message_post_func_and_inject_server(func_to_run):
         server = get_server(ctx)
         await func_to_run(server, ctx, *args, **kwargs)
         await ctx.message.delete()
-        await server.update_server_message(ctx.channel)
+        #await server.update_server_message(ctx.channel)
+        await server.handle_server_message(ctx.channel)
 
     # Big thanks to Sierra Macleod for this solution
     # https://medium.com/@cantsayihave/decorators-in-discord-py-e44ce3a1aae5
@@ -80,7 +81,7 @@ async def skip(server, ctx):
 @client.command(pass_context=True, help="Embeds the playback queue in a message")
 @remove_message_post_func_and_inject_server
 async def queue(server, ctx):
-    await server.create_server_message(channel=ctx.channel)
+    await server.handle_server_message(channel=ctx.channel)
 
 
 @client.command(pass_context=True, help="Embeds the playback queue in a message")

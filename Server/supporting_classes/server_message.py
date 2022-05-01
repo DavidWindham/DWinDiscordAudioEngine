@@ -6,15 +6,21 @@ class MessageHandler:
     async def post_message(self, channel, embedded_content):
         self.message = await channel.send(embed=embedded_content)
 
-    # def set_message(self, message):
-    #     self.message = message
+    async def delete_old_message(self):
+        try:
+            print("attempting to delete")
+            await self.message.delete()
+            print("delete should be successful")
+        except:
+            print("Old message was not found")
 
-    async def create_embedded_message(self, channel, embedded_content):
-        if self.message is None:
-            await self.post_message(channel, embedded_content)
-            return
+    async def create_message(self, channel, embedded_content):
+        if self.message is not None:
+            await self.delete_old_message()
 
-    async def update_embedded_message(self, embedded_content, channel=None):
+        await self.post_message(channel, embedded_content)
+
+    async def handle_message(self, embedded_content, channel=None):
         if self.message is not None:
             try:
                 await self.message.edit(
@@ -27,4 +33,4 @@ class MessageHandler:
                 self.message = None
 
         if channel is not None:
-            await self.create_embedded_message(channel=channel, embedded_content=embedded_content)
+            await self.create_message(channel=channel, embedded_content=embedded_content)
