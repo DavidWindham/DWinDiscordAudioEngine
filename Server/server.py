@@ -115,6 +115,15 @@ class Server:
     # def set_server_message(self, message):
     #     self.message_handler.set_message(message)
 
+    # async def update_or_create_server_message(self, channel):
+    #     print("Update called")
+    #     try:
+    #         print("Trying to update")
+    #         await self.update_server_message()
+    #     except:
+    #         print("update failed, now trying to create")
+    #         await self.create_server_message(channel)
+
     async def create_server_message(self, channel):
         embedded_content = get_embedded_message_content(
             queue=self.queue.get_queue(),
@@ -123,13 +132,13 @@ class Server:
         )
         await self.message_handler.create_embedded_message(channel=channel, embedded_content=embedded_content)
 
-    async def update_server_message(self):
+    async def update_server_message(self, channel=None):
         embedded_content = get_embedded_message_content(
             queue=self.queue.get_queue(),
             currently_playing=self.currently_playing,
             playback_status=self.playback_status
         )
-        await self.message_handler.update_embedded_message(embedded_content=embedded_content)
+        await self.message_handler.update_embedded_message(embedded_content=embedded_content, channel=channel)
 
     '''
     Database specific methods

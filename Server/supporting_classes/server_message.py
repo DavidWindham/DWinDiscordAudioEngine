@@ -14,12 +14,17 @@ class MessageHandler:
             await self.post_message(channel, embedded_content)
             return
 
-    async def update_embedded_message(self, embedded_content):
-        try:
-            await self.message.edit(
-                embed=embedded_content
-            )
-        except:
-            # Likely will fire if message has been deleted
-            print("Cannot edit server message")
-            self.message = None
+    async def update_embedded_message(self, embedded_content, channel=None):
+        if self.message is not None:
+            try:
+                await self.message.edit(
+                    embed=embedded_content
+                )
+                return
+            except:
+                # Likely will fire if message has been deleted
+                print("Cannot edit server message")
+                self.message = None
+
+        if channel is not None:
+            await self.create_embedded_message(channel=channel, embedded_content=embedded_content)
