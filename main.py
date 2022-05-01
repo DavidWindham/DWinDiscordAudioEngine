@@ -75,7 +75,7 @@ async def stop(server, ctx):
 @client.command(pass_context=True, help="Skips the current track and plays the next in the queue")
 @remove_message_post_func_and_inject_server
 async def skip(server, ctx):
-    server.play_next()
+    server.skip()
 
 
 @client.command(pass_context=True, help="Embeds the playback queue in a message")

@@ -1,5 +1,6 @@
 from discord import Embed
 from discord.utils import get
+import asyncio
 
 from .supporting_classes.db import ServerDB
 from .supporting_classes.queue import Queue
@@ -17,14 +18,15 @@ class Server:
         self.voice_channel = VoiceChannel()
         self.currently_playing = None
         self.playback_status = "Stopped"
-        self.callback_block = False
+
+        ''' Block next callback prevents the callback that occurs after an item has finished playing '''
+        self.block_next_callback = False
 
     '''
     Playback specific methods
     '''
 
     async def play(self, voice_channel, voice_clients, guild_id, url=None):
-        # if not already joined(?)
         if voice_clients is None:
             await self.join_voice_channel(voice_channel, guild_id)
         elif not voice_clients.is_connected():
@@ -51,25 +53,21 @@ class Server:
         )
 
     def play_next(self):
-        if self.callback_block:
-            self.callback_block = False
+        if self.block_next_callback:
+            self.block_next_callback = False
             return
 
-        self.stop()
-        # TODO: I likely need some kinda pause or stop here
         if self.queue.is_empty():
-            print("is empty so returning")
+            self.currently_playing = None
+            self.playback_status = "Stopped"
+            self.sync_handle_server_message()
             return
 
         next_item_to_play = self.queue.get_next_from_queue()
         self.voice_channel.play_url(next_item_to_play.get_url(), self.play_next)
         self.currently_playing = next_item_to_play
         self.playback_status = "Playing"
-
-    # def play(self):
-    #     if self.currently_playing is not None:
-    #         self.voice_channel.play()
-    #         self.playback_status = "Playing"
+        self.sync_handle_server_message()
 
     def pause(self):
         self.voice_channel.pause()
@@ -80,11 +78,15 @@ class Server:
         self.playback_status = "Playing"
 
     def stop(self):
-        self.callback_block = True
-        # this will fire the callback, TODO: fix the bug that comes with this
+        # this will block the callback from firing
+        self.block_next_callback = True
         self.voice_channel.stop()
-        # self.currently_playing = None
         self.playback_status = "Stopped"
+
+    def skip(self):
+        self.block_next_callback = True
+        self.voice_channel.stop()
+        self.play_next()
 
     '''
     VoiceChannel specific methods
@@ -119,6 +121,14 @@ class Server:
             playback_status=self.playback_status
         )
         await self.message_handler.handle_message(embedded_content=embedded_content, channel=channel)
+
+    def sync_handle_server_message(self):
+        future_func = asyncio.run_coroutine_threadsafe(coro=self.handle_server_message(), loop=self.discord_client.loop)
+        try:
+            future_func.result()
+        except:
+            print("Error at async threadsafe for update_message, called from playback callback")
+
 
     '''
     Database specific methods

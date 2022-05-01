@@ -28,10 +28,7 @@ class AudioEngine:
         self.audio_interface = None
 
     def play_url(self, url, url_finished_callback):
-        print("url:", url)
-        print(url_finished_callback)
-        print(get_ffmpeg_object(url))
-        print("Audio interface:", self.audio_interface)
+        print("called to play with url:", url)
         self.audio_interface.play(get_ffmpeg_object(url), after=lambda e: url_finished_callback())
         self.audio_interface.is_playing()
 

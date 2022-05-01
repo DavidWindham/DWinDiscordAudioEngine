@@ -8,11 +8,9 @@ class MessageHandler:
 
     async def delete_old_message(self):
         try:
-            print("attempting to delete")
             await self.message.delete()
-            print("delete should be successful")
         except:
-            print("Old message was not found")
+            pass
 
     async def create_message(self, channel, embedded_content):
         if self.message is not None:
@@ -29,7 +27,6 @@ class MessageHandler:
                 return
             except:
                 # Likely will fire if message has been deleted
-                print("Cannot edit server message")
                 self.message = None
 
         if channel is not None:
