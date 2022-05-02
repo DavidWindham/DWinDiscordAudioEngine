@@ -9,6 +9,9 @@ class Queue:
     def add_to_queue(self, item_to_append) -> None:
         self.queue.append(item_to_append)
 
+    def append_list_to_queue(self, list_to_append: []) -> None:
+        self.queue = [*self.queue, *list_to_append]
+
     def get_next_from_queue(self) -> dict or None:
         if not self.queue:
             return None

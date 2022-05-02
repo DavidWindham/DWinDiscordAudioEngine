@@ -3,12 +3,30 @@ import datetime
 from youtube_dl import YoutubeDL
 
 
-class UrlObject:
-    def __init__(self, url_to_scrape):
-        youtube_dl_args = {'format': 'bestaudio', 'noplaylist': 'True'}
-        with YoutubeDL(youtube_dl_args) as youtube_dl:
-            youtube_json = youtube_dl.extract_info(url_to_scrape, download=False)
+def get_url_object_s(url):
+    youtube_dl_args = {'format': 'bestaudio', 'playlistend': 30}
+    with YoutubeDL(youtube_dl_args) as youtube_dl:
+        youtube_json = youtube_dl.extract_info(url, download=False)
 
+    if '_type' not in youtube_json:
+        return [
+            UrlObject(youtube_json)
+        ]
+
+    # likely playlist but maybe check also
+    if youtube_json['_type'] == "playlist":
+        return_list = []
+        for single_youtube_video in youtube_json['entries']:
+            return_list.append(
+                UrlObject(single_youtube_video)
+            )
+        return return_list
+
+    return None
+
+
+class UrlObject:
+    def __init__(self, youtube_json):
         self.video_id = youtube_json['id']
         self.url = youtube_json['formats'][0]['url']
         self.title = youtube_json['title']
@@ -16,7 +34,6 @@ class UrlObject:
         self.webpage_url = youtube_json['webpage_url']
         self.duration = youtube_json['duration']
         self.duration_string = str(datetime.timedelta(seconds=self.duration))
-        print(self.title, self.url)
 
     def get_id(self):
         return self.video_id

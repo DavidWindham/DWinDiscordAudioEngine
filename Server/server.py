@@ -6,7 +6,8 @@ from discord.utils import get
 from .supporting_classes.db import ServerDB
 from .supporting_classes.queue import Queue
 from .supporting_classes.server_message import MessageHandler
-from .supporting_classes.url_object import UrlObject
+# from .supporting_classes.url_object import UrlObject
+from .supporting_classes.url_object import get_url_object_s
 from .supporting_classes.voice_channel_handler.voice_channel import VoiceChannel
 
 
@@ -40,18 +41,15 @@ class Server:
                 self.playback_status = "Playing"
             return
 
-        url_object = UrlObject(url)
-        self.db.append_to_history(url_object.get_dict())
+        url_object_list = get_url_object_s(url)
+
+        self.queue.append_list_to_queue(
+            url_object_list
+        )
 
         if not self.voice_channel.is_engine_playing():
-            self.voice_channel.play_url(url_object.get_url(), self.play_next)
-            self.currently_playing = url_object
-            self.playback_status = "Playing"
+            self.play_next()
             return
-
-        self.queue.add_to_queue(
-            url_object
-        )
 
     def play_next(self):
         if self.block_next_callback:
@@ -65,9 +63,12 @@ class Server:
             return
 
         next_item_to_play = self.queue.get_next_from_queue()
-        self.voice_channel.play_url(next_item_to_play.get_url(), self.play_next)
+        self.voice_channel.play_url(next_item_to_play.get_url(), self.audio_finish_callback)
         self.currently_playing = next_item_to_play
         self.playback_status = "Playing"
+
+    def audio_finish_callback(self):
+        self.play_next()
         self.sync_handle_server_message()
 
     def pause(self):
