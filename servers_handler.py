@@ -1,4 +1,4 @@
-from Server.server import Server
+from server.server import Server
 
 
 class ServersHandler:
